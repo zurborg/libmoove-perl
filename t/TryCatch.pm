@@ -14,24 +14,24 @@ func test1 {
 }
 
 func test2 {
-    
+
     try {
         die "def\n"
     } catch ($e) {
         return $e
     }
-    
+
     return;
 }
 
 func test3 {
-    
+
     try {
         die "ghi\n"
     } catch ($e) {
         die "$e: jkl\n"
     }
-    
+
     return;
 }
 
