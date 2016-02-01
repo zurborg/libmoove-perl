@@ -4,34 +4,50 @@ package Moove;
 
 # ABSTRACT: functions and methods with parameter lists and type constraints
 
+use Type::Tiny 1.000005 ();
 use Type::Registry ();
 use Type::Utils qw(class_type);
-use Function::Parameters ();
-use Import::Into ();
-use Carp qw(croak);
+
+use Function::Parameters 1.0703 ();
+use Import::Into 1.002004 ();
+use Syntax::Feature::Try 1.003 ();
+use Data::OptList 0.109 ();
+
+use Carp qw(croak confess);
+
+our @EXPORT;
 
 # VERSION
 
 sub import {
     my $caller = scalar caller;
     my $class = shift;
-    my %opts = @_;
+    my $opts = Data::OptList::mkopt_hash(\@_);
 
     my $registry = Type::Registry->for_class($caller);
-    if (my $types = delete $opts{types}) {
+    if (my $types = delete $opts->{types}) {
         if (ref $types eq 'ARRAY') {
             $registry->add_types(@$types);
+        } elsif (ref $types eq 'SCALAR') {
+            $registry->add_types($$types);
         } else {
-            $registry->add_types($types);
+            croak "unknown value for argument 'types': $types";
         }
     }
-    if (my $classes = delete $opts{classes}) {
+    if (my $classes = delete $opts->{classes}) {
         foreach my $class (@$classes) {
             $registry->add_type(class_type($class) => $class);
         }
     }
+    if (my $types = delete $opts->{type}) {
+        foreach my $type (@$types) {
+            $registry->add_type($type);
+        }
+    }
 
-    Type::Registry->for_class($caller)->add_types(-Standard);
+    unless (exists $opts->{-nostdtypes}) {
+        $registry->add_types(-Standard);
+    }
 
     Function::Parameters->import::into($caller, {
         method => {
@@ -47,20 +63,29 @@ sub import {
             reify_type => \&_reify_type,
         }
     });
+
+    if (exists $opts->{-trycatch}) {
+        Syntax::Feature::Try::register_exception_matcher(sub {
+            my ($exception, $typedef) = @_;
+            $registry->lookup($typedef)->check($exception) || undef;
+        });
+
+        require syntax;
+        syntax->import_into($caller, 'try');
+    }
 }
 
 sub _reify_type {
     my ($typedef, $package) = @_;
-    require Type::Registry;
     my $registry = Type::Registry->for_class($package);
-    $registry->lookup($typedef) // die "unknown type definition: $typedef";
+    $registry->lookup($typedef);
 }
 
 1;
 
 =head1 DESCRIPTION
 
-This module inherits L<Function::Parameters> with some default and the binding against L<Type::Tiny>.
+This module inherits L<Function::Parameters> with some defaults and type constraints with L<Type::Tiny>.
 
 Some reasons to use Moove:
 
@@ -72,6 +97,8 @@ Some reasons to use Moove:
 
 =item * A nearly replacement for L<Method::Signatures>
 
+But with some differences...
+
 =back
 
 This is also a very early release.
@@ -80,14 +107,28 @@ This is also a very early release.
 
     use Moove;
 
-    func foo (Int $number, Str $text) {
+    func foo (Int $number, Str $text)
+    {
         ...
     }
 
+
     use Moove classes => [qw[ Some::Class ]];
 
-    method bar (Some::Class $obj) {
+    method bar (Some::Class $obj)
+    {
         ...
+    }
+
+
+    use Moove -trycatch;
+
+    func foobar () {
+        try {
+            die "meh";
+        } catch {
+            return "caught meh.";
+        }
     }
 
 =head1 IMPORT OPTIONS
@@ -98,13 +139,21 @@ The I<import> method supports these keywords:
 
 =item * types
 
-As an ArrayRef, calls C<<< Types::Registry->for_class($caller)->add_types(@$types) >>>
+As an ArrayRef, calls C<<< Types::Registry->for_class($caller)->add_types(@$types) >>>.
 
-As a scalar, calls C<<< Types::Registry->for_class($caller)->add_types($types) >>>
+As a ScalarRef, calls C<<< Types::Registry->for_class($caller)->add_types($$types) >>>.
 
 =item * classes
 
-For each class in this ArrayRef, calls C<<< Types::Registry->for_class($caller)->add_types(Type::Utils::class_type($class)) >>>
+For each class in this ArrayRef, calls C<<< Types::Registry->for_class($caller)->add_types(Type::Utils::class_type($class)) >>>.
+
+=item * -nostdtypes
+
+Do not import L<Types::Standard>.
+
+=item * -trycatch
+
+Import L<Syntax::Feature::Try> with type constraints.
 
 =back
 
