@@ -1,6 +1,8 @@
 Revision history for Moove
 
 {{$NEXT}}
+
+0.002 2016-06-30
  - Allow build for perl-5.14
 
 0.001 2016-02-01
