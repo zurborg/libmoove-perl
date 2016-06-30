@@ -1,6 +1,7 @@
 Revision history for Moove
 
 {{$NEXT}}
+ - Allow build for perl-5.14
 
 0.001 2016-02-01
  - Initial release
