@@ -97,7 +97,7 @@ sub import {
 sub _reify_type {
     my ($typedef, $package) = @_;
     my ($caller, $file, $line) = caller;
-    my $options = $OPTIONS{$caller} || {};
+    my $options = $OPTIONS{$package} || {};
     my $type;
     eval {
         if ($options->{autoclass} and $typedef =~ PKGRE) {
