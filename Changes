@@ -1,6 +1,7 @@
 Revision history for Moove
 
 {{$NEXT}}
+ - Bug fix
 
 0.003 2016-12-21
  - Auto-generation of class contraints
