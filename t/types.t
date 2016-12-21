@@ -19,3 +19,4 @@ throws_ok {
 
 } qr{Reference .*? \Qdid not pass type constraint "FooBar" (not isa Foo::Bar)\E};
 
+done_testing;
