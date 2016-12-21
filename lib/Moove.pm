@@ -19,12 +19,19 @@ our @EXPORT;
 
 # VERSION
 
+my %OPTIONS;
+
+use constant PKGRE => qr{^\w+(::\w+)+$};
+
 sub import {
     my $caller = scalar caller;
     my $class = shift;
     my $opts = Data::OptList::mkopt_hash(\@_);
 
     my $registry = Type::Registry->for_class($caller);
+
+    my $options = $OPTIONS{$caller} ||= {};
+
     if (my $types = delete $opts->{types}) {
         if (ref $types eq 'ARRAY') {
             $registry->add_types(@$types);
@@ -49,6 +56,10 @@ sub import {
         $registry->add_types(-Standard);
     }
 
+    if (exists $opts->{-autoclass}) {
+        $options->{autoclass} = 1;
+    }
+
     Function::Parameters->import::into($caller, {
         method => {
             defaults => 'method',
@@ -67,7 +78,15 @@ sub import {
     if (exists $opts->{-trycatch}) {
         Syntax::Feature::Try::register_exception_matcher(sub {
             my ($exception, $typedef) = @_;
-            $registry->lookup($typedef)->check($exception) || undef;
+            if ($options->{autoclass} and $typedef =~ PKGRE) {
+                if ($typedef->can('caught')) {
+                    return $typedef->caught($exception) || undef;
+                } else {
+                    return class_type($typedef)->check($exception) || undef;
+                }
+            } else {
+                return $registry->lookup($typedef)->check($exception) || undef;
+            }
         });
 
         require syntax;
@@ -77,8 +96,24 @@ sub import {
 
 sub _reify_type {
     my ($typedef, $package) = @_;
-    my $registry = Type::Registry->for_class($package);
-    $registry->lookup($typedef);
+    my ($caller, $file, $line) = caller;
+    my $options = $OPTIONS{$caller} || {};
+    my $type;
+    eval {
+        if ($options->{autoclass} and $typedef =~ PKGRE) {
+            $type = class_type($typedef);
+        } else {
+            my $registry = Type::Registry->for_class($package);
+            $type = $registry->lookup($typedef);
+        }
+    };
+    if (my $e = $@) {
+        $e =~ s{\s+ at \s+ \S+ \s+ line \s+ \S+ \s*$}{}xs;
+        warn "$e at $file line $line\n";
+        exit 255;
+    } else {
+        return $type;
+    }
 }
 
 1;
@@ -131,6 +166,14 @@ This is also a very early release.
         }
     }
 
+
+    use Moove -autoclass;
+
+    method bar (Some::Class $obj)
+    {
+        ...
+    }
+
 =head1 IMPORT OPTIONS
 
 The I<import> method supports these keywords:
@@ -155,6 +198,10 @@ Do not import L<Types::Standard>.
 
 Import L<Syntax::Feature::Try> with type constraints.
 
+=item * -autoclass
+
+Enable auto-generation of class contraints (L<Type::Tiny::Class>) if the constraint looks like a package name (C</^\w+(::\w+)+$/>). This always takes precedence over the general type registry.
+
+This also works with I<-trycatch>.
+
 =back
-
-
