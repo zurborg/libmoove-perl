@@ -2,7 +2,7 @@ package t::TryCatch;
 
 use Moove types => \'t::TryCatch::typelib', -trycatch;
 
-func test1 {
+func test1() {
 
     try {
         die "abc\n"
@@ -13,7 +13,7 @@ func test1 {
     return;
 }
 
-func test2 {
+func test2() {
 
     try {
         die "def\n"
@@ -24,7 +24,7 @@ func test2 {
     return;
 }
 
-func test3 {
+func test3() {
 
     try {
         die "ghi\n"

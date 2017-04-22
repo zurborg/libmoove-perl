@@ -97,6 +97,7 @@ sub import {
 sub _reify_type {
     my ($typedef, $package) = @_;
     my ($caller, $file, $line) = caller;
+    $package //= $caller;
     my $options = $OPTIONS{$package} || {};
     my $type;
     eval {
