@@ -8,7 +8,7 @@ use Type::Tiny 1.000005 ();
 use Type::Registry ();
 use Type::Utils qw(class_type);
 
-use Function::Parameters 1.0703 ();
+use Function::Parameters 1.0703 qw(:lax);
 use Import::Into 1.002004 ();
 use Syntax::Feature::Try 1.003 ();
 use Data::OptList 0.109 ();
