@@ -1,6 +1,7 @@
 Revision history for Moove
 
 {{$NEXT}}
+ - Ignore :: in class names
 
 0.005 2017-05-02
  - Compatability with Function::Parameters v2
