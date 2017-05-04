@@ -111,7 +111,7 @@ sub _reify_type {
     };
     if (my $e = $@) {
         $e =~ s{\s+ at \s+ \S+ \s+ line \s+ \S+ \s*$}{}xs;
-        warn "$e at $file line $line\n";
+        warn "$typedef: $e in $package at $file line $line\n";
         exit 255;
     } else {
         return $type;
