@@ -1,6 +1,8 @@
 Revision history for Moove
 
 {{$NEXT}}
+
+0.006 2017-05-04
  - Ignore :: in class names
 
 0.005 2017-05-02
