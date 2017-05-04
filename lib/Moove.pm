@@ -4,7 +4,7 @@ package Moove;
 
 # ABSTRACT: functions and methods with parameter lists and type constraints
 
-use Type::Tiny 1.000005 ();
+use Type::Tiny 1.000006 ();
 use Type::Registry ();
 use Type::Utils qw(class_type);
 
@@ -43,7 +43,8 @@ sub import {
     }
     if (my $classes = delete $opts->{classes}) {
         foreach my $class (@$classes) {
-            $registry->add_type(class_type($class) => $class);
+            my $type = class_type($class);
+            $registry->add_type($type);
         }
     }
     if (my $types = delete $opts->{type}) {
