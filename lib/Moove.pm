@@ -83,7 +83,7 @@ sub import {
                 if ($typedef->can('caught')) {
                     return $typedef->caught($exception) || undef;
                 } else {
-                    return class_type($typedef)->check($exception) || undef;
+                    return $registry->make_class_type($typedef)->check($exception) || undef;
                 }
             } else {
                 return $registry->lookup($typedef)->check($exception) || undef;
